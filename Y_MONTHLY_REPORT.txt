@@ -1,0 +1,96 @@
+*&---------------------------------------------------------------------*
+*& Report  Y_MONTHLY_REPORT
+*&
+*&---------------------------------------------------------------------*
+*&
+*&
+*&---------------------------------------------------------------------*
+
+REPORT  Y_MONTHLY_REPORT.
+
+"Used tables
+*TABLES: lfa1, kna1, mara.
+
+
+"Definition of date variable from table lfa1
+DATA: lv_erdat TYPE lfa1-erdat.
+
+"Definition of count variable
+DATA: lv_count_kna1 TYPE i.
+DATA: lv_count_lfa1 TYPE i.
+DATA: lv_count_mara TYPE i.
+DATA: lv_count_lfb1 TYPE i.
+*DATA: lv_count_bukrs TYPE lfb1-bukrs.
+
+TYPES: BEGIN OF st_table,
+    lv_count_bukrs TYPE i,
+    lv_company_code TYPE lfb1-bukrs,
+  END OF st_table.
+
+DATA: it_table TYPE TABLE OF st_table WITH HEADER LINE,
+      wa_table TYPE st_table.
+
+
+
+"Selection screen of program
+SELECTION-SCREEN: BEGIN OF BLOCK b1 WITH FRAME TITLE text-001.
+
+SELECT-OPTIONS:
+                s_date FOR lv_erdat.
+
+
+SELECTION-SCREEN END OF BLOCK b1.
+
+
+START-OF-SELECTION.
+  PERFORM output_data.
+
+
+
+*&---------------------------------------------------------------------*
+*&      Form  OUTPUT_DATA
+*&---------------------------------------------------------------------*
+*       Select all number of entries for table lfa1, kna1 and mara
+*       and displey them.
+*----------------------------------------------------------------------*
+*  -->  p1        text
+*  <--  p2        text
+*----------------------------------------------------------------------*
+FORM OUTPUT_DATA .
+
+  SELECT COUNT(*) FROM lfa1 INTO lv_count_lfa1 WHERE lfa1~erdat IN s_date.
+  SELECT COUNT(*) FROM kna1 INTO lv_count_kna1 WHERE kna1~erdat IN s_date.
+  SELECT COUNT(*) FROM mara INTO lv_count_mara WHERE mara~ersda IN s_date.
+
+
+  WRITE:/ 'Брой на доставчици: ', lv_count_lfa1.
+  WRITE:/ 'Брой на клиенти:    ', lv_count_kna1.
+  WRITE:/ 'Брой на материали:  ', lv_count_mara.
+  ULINE.
+
+  WRITE:/ 'Доставчици към фирмен код:'.
+  SELECT COUNT(*) bukrs FROM lfb1 INTO it_table WHERE lfb1~erdat IN s_date GROUP BY bukrs.
+
+    WRITE:/ it_table-lv_company_code, it_table-lv_count_bukrs.
+
+  ENDSELECT.
+  ULINE.
+
+  WRITE:/ 'Клиенти към фирмен код:'.
+  SELECT COUNT(*) bukrs FROM knb1 INTO it_table WHERE knb1~erdat IN s_date GROUP BY bukrs.
+
+    WRITE:/ it_table-lv_company_code, it_table-lv_count_bukrs.
+
+  ENDSELECT.
+
+  ULINE.
+
+  WRITE:/ 'Материали към фирмен код:'.
+  SELECT COUNT(*) werks FROM msta INTO it_table WHERE msta~ersda IN s_date AND msta~werks <> '' GROUP BY werks.
+
+    WRITE:/ it_table-lv_company_code, it_table-lv_count_bukrs.
+
+  ENDSELECT.
+
+
+ENDFORM.                    " OUTPUT_DATA
